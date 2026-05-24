@@ -56,9 +56,10 @@ static int AToW(const char* a, wchar_t* buf, int bufSize)
 // Convert ANSI extension to lowercase and look it up in B2E_TABLE.
 static const B2eTableEntry* FindEntry(const char* path)
 {
-    const char* dot = kiPath::ext(path);  // returns pointer to '.' or NULL
-    if (!dot || dot[0] != '.') return nullptr;
-    const char* extRaw = dot + 1;
+    // kiPath::ext() returns a pointer to the char after the last '.',
+    // or a pointer to '\0' when there is no extension.
+    const char* extRaw = kiPath::ext(path);
+    if (!extRaw || !extRaw[0]) return nullptr;
 
     char extLow[64] = {};
     int i = 0;
@@ -103,10 +104,9 @@ std::vector<B2eFormatInfo> B2e_GetWritableFormats()
 
 bool B2e_IsArchiveExt(const wchar_t* ext)
 {
-    // ext has no dot; build a fake path "x.<ext>" so FindEntry can strip it.
-    char extA[64] = {};
-    WToA(ext, extA + 2, 60);
-    extA[0] = 'x'; extA[1] = '.';
+    // Build "x.<ext>" so kiPath::ext() inside FindEntry can extract the extension.
+    char extA[66] = {'x', '.'};
+    WToA(ext, extA + 2, 62);
     return FindEntry(extA) != nullptr;
 }
 
