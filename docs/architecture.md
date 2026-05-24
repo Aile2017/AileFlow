@@ -17,34 +17,43 @@ with B2E script-driven external tool calls, while keeping the UI and settings st
 ```
 AileFlow/
   src/
-    [A] MainWindow.cpp/h          … Main window — tree + list view, toolbar, menus
-    [A] CompressDlg.cpp/h         … Compression dialog
+    [B] MainWindow.cpp          … Main window — tree + list view, toolbar, menus
+                                  (B2E patches: m_isReadOnly for all archives,
+                                   skip outer password retry, OnTest not-supported guard)
+    [A] MainWindow.h            … Unchanged from AileEx
+    [A] CompressDlg.cpp/h       … Compression dialog
     [A] AdvancedCompressDlg.cpp/h … Advanced compression options dialog
-    [A] SettingsDlg.cpp/h         … Settings dialog
-    [A] Settings.cpp/h            … INI load/save
-    [A] ProgressDlg.cpp/h         … Progress dialog (worker thread notifications)
-    [A] WorkerThread.cpp/h        … Worker thread infrastructure
-    [A] InfoDlg.cpp/h             … Entry info dialog
-    [A] I18n.cpp/h                … Bilingual (EN/JA) string lookup
-    [A] DialogUtils.h             … Common dialog helpers
-    [A] ArchiveItem.h             … Archive entry struct (path/isDir only populated)
-    [A] App.cpp/h                 … Application entry — startup mode routing
-    [B] SevenZip.h                … Archive backend public API (signature kept identical to AileEx)
-    [B] SevenZipB2e.cpp           … B2E implementation of SevenZip.h (replaces SevenZip.cpp)
-    [C] ArcB2e.cpp/h              … B2E script engine (from Noah)
-    [C] Archiver.cpp/h            … Archiver base class (from Noah)
-  kilib/                          … [C] K.I.LIB utility library (from Noah)
-    kl_rythp.cpp/h                … Rythp VM — B2E script interpreter
-    kl_str.cpp/h                  … String class (kiStr / kiPath)
-    kl_file.cpp/h                 … Binary file I/O
-    kl_find.cpp/h                 … File enumeration
-    kl_misc.h                     … Macros, kiArray template
-    kl_reg.cpp/h                  … Registry / INI file access
-    kl_wcmn.cpp/h                 … Windows common utilities
-    kl_wnd.cpp/h                  … Window base classes
-    kl_carc.h                     … Archiver DLL interface definitions
+    [A] SettingsDlg.cpp/h       … Settings dialog
+    [A] Settings.cpp/h          … INI load/save
+    [A] ProgressDlg.cpp/h       … Progress dialog (worker thread notifications)
+    [A] WorkerThread.cpp/h      … Worker thread infrastructure
+    [A] InfoDlg.cpp/h           … Entry info dialog
+    [A] I18n.cpp/h              … Bilingual (EN/JA) string lookup
+    [A] DialogUtils.h           … Common dialog helpers
+    [A] ArchiveItem.h           … Archive entry struct (path/isDir only populated)
+    [A] App.cpp/h               … Application entry — startup mode routing
+    [A] UnrarDll.cpp/h          … unrar.dll wrapper (kept; unrar never loads in AileFlow)
+    [A] RarProcess.cpp/h        … rar.exe process wrapper (kept; used for RAR comment via rar.exe)
+    [A] CompressHelper.cpp/h    … Compression helper utilities
+    [B] SevenZip.h              … Archive backend public API (signature kept identical to AileEx)
+    [B] SevenZipB2e.cpp         … B2E implementation of SevenZip.h (replaces SevenZip.cpp)
+    [C] B2eBridge.h             … UNICODE/ANSI bridge API (no kilib types exposed)
+    [C] B2eBridge.cpp           … Bridge implementation (ANSI mode, KILIB_B2E_SOURCES)
+    [C] ArcB2e.cpp/h            … B2E script engine (from Noah; input() adds password dialog)
+    [C] Archiver.cpp/h          … Archiver base class (from Noah)
+    [C] AileFlowKiLib.cpp       … kilib startup shim (kiStr::standalone_init, init_b2e_path)
+  kilib/                        … [C] K.I.LIB utility library (from Noah)
+    kl_rythp.cpp/h              … Rythp VM — B2E script interpreter
+    kl_str.cpp/h                … String class (kiStr / kiPath); standalone_init() added
+    kl_file.cpp/h               … Binary file I/O
+    kl_find.cpp/h               … File enumeration
+    kl_misc.h                   … Macros, kiArray template
+    kl_reg.cpp/h                … Registry / INI file access
+    kl_wcmn.cpp/h               … Windows common utilities
+    kl_wnd.cpp/h                … Window base classes
+    kl_carc.h                   … Archiver DLL interface definitions
   Release/
-    b2e/                          … [C] B2E scripts (from Noah/Release/b2e/ as-is)
+    b2e/                        … [C] B2E scripts (from Noah/Release/b2e/ as-is)
       7z.b2e
       zip.zipx.b2e
       rar.b2e
@@ -53,11 +62,11 @@ AileFlow/
       cab.b2e
       rpm.cpio.b2e
       0.b2e
-  res/                            … [A] Resources (icons, RC file — from AileEx)
+  res/                          … [A] Resources (icons, RC file — from AileEx)
   docs/
-    architecture.md               … This file
-    limitations.md                … Features unavailable compared to AileEx
-    sync-aileex.md                … Workflow for pulling AileEx changes
+    architecture.md             … This file
+    limitations.md              … Features unavailable compared to AileEx
+    sync-aileex.md              … Workflow for pulling AileEx changes
 ```
 
 ### File Classification
@@ -65,7 +74,7 @@ AileFlow/
 | Class | Meaning | When AileEx is updated |
 |---|---|---|
 | **A: Unchanged** | Copied from AileEx verbatim | Simple copy or merge |
-| **B: Replaced** | AileEx-origin header kept; implementation replaced for B2E | Track `.h` changes only |
+| **B: Replaced** | AileEx-origin header kept; implementation replaced or patched for B2E | Track `.h` changes; merge patches carefully |
 | **C: AileFlow-original** | From Noah or new to AileFlow | Independent of AileEx |
 
 ---
@@ -83,18 +92,35 @@ MainWindow.cpp  →  SevenZip.h  →  SevenZip.cpp  →  7z.dll
 
 AileFlow calls:
 ```
-MainWindow.cpp  →  SevenZip.h  →  SevenZipB2e.cpp  →  CArcB2e  →  Rythp VM  →  external tools
+MainWindow.cpp  →  SevenZip.h  →  SevenZipB2e.cpp  →  B2eBridge  →  CArcB2e  →  Rythp VM  →  external tools
 ```
 
-Because `MainWindow.cpp` only sees `SevenZip.h`, it remains identical to the AileEx version.
-Any feature added to AileEx's `MainWindow.cpp` can be merged into AileFlow without conflicts.
+`SevenZipB2e.cpp` delegates to `B2eBridge` which provides a UNICODE-safe API over the ANSI
+kilib/B2E layer. `B2eBridge.cpp` is compiled in ANSI mode (KILIB_B2E_SOURCES) and converts
+paths with `WideCharToMultiByte` / `MultiByteToWideChar` at the boundary.
 
-### Files Removed from AileEx
+`MainWindow.cpp` carries three small B2E-specific patches (Class B); all other behavior
+is unchanged from AileEx.
 
-- `SevenZip.cpp` — replaced by `SevenZipB2e.cpp`
-- `UnrarDll.cpp/h` — removed (unrar.dll not used)
-- `RarProcess.cpp/h` — removed (rar.exe called via B2E instead)
-- `CompressHelper.cpp/h` — removed or merged into `SevenZipB2e.cpp`
+### B2E Sentinel Value
+
+`SevenZip::Load()` in the B2E implementation sets `m_hDll = (HMODULE)1` as a sentinel
+(no real DLL is loaded). `IsLoaded()` returns true; `GetLoadedPath()` returns an empty string.
+`MainWindow.cpp` uses `GetLoadedPath().empty()` to distinguish the B2E backend from 7z.dll.
+
+### ANSI / UNICODE Split
+
+All kilib/B2E sources are compiled with per-file flags:
+```
+/EHs-c- /GR- /UUNICODE /U_UNICODE /UWIN32_LEAN_AND_MEAN
+```
+This lets Win32 macros expand to A-variants (`CharLowerA`, `MessageBoxA`, etc.) so they match
+`char*` parameters. The UI layer (`AILEFLOW_UI_SOURCES`) uses the standard UNICODE build.
+
+### Build-time b2e Script Deployment
+
+A CMake `POST_BUILD` command copies `Release/b2e/*.b2e` next to the exe after every build,
+so `CArcB2e::init_b2e_path()` can find them at `<exe>/b2e/`.
 
 ---
 
@@ -103,14 +129,15 @@ Any feature added to AileEx's `MainWindow.cpp` can be merged into AileFlow witho
 ```
 User opens archive
   → SevenZipB2e::OpenArchive()
-      → CArcB2e::v_list()
-          → exec_script(m_LstScr)     [list: section of .b2e]
-              → Rythp VM executes (xscan ...) command
-                  → runs "7z.exe l <archive>"
-                  → parses text output, extracts filenames
-      → returns aflArray (filename + isDir only)
-  → adapter: aflArray → std::vector<ArchiveItem>
-      (path, isDir filled; size/packedSize/mtime/method left zero/empty)
+      → B2e_List()  [B2eBridge, ANSI mode]
+          → CArcB2e::list()
+              → exec_script(m_LstScr)     [list: section of .b2e]
+                  → Rythp VM executes (xscan ...) command
+                      → runs "7z.exe l <archive>"
+                      → parses text output, extracts filenames
+          → returns aflArray (szFileName + rawline)
+      → adapter: aflArray → std::vector<ArchiveItem>
+          (path, isDir filled; rawline → comment/Info column)
   → MainWindow::PopulateTree() / PopulateList()
       → ListView columns: Name | Info (raw output line)
 ```
@@ -122,10 +149,11 @@ User opens archive
 ```
 User triggers extract
   → SevenZipB2e::Extract()
-      → CArcB2e::v_melt()
-          → exec_script(m_DecScr or m_DcEScr)   [decode: or decode1:]
-              → Rythp VM executes (cmd x ...) or (cmd x -y ... (list))
-                  → runs external tool (7zG.exe, WinRAR.exe, etc.)
+      → B2e_Extract()  [B2eBridge]
+          → CArcB2e::melt()
+              → exec_script(m_DecScr or m_DcEScr)   [decode: or decode1:]
+                  → Rythp VM executes (cmd x ...) or (cmd x -y ... (list))
+                      → runs external tool (7zG.exe, WinRAR.exe, etc.)
 ```
 
 Note: progress reporting relies on the external tool's own window (e.g., 7zG.exe GUI).
@@ -133,10 +161,26 @@ AileFlow's `ProgressDlg` is not integrated with external tool progress.
 
 ---
 
+## Data Flow: Password (Encrypted Archives)
+
+```
+B2E script calls (input "message:" "")
+  → CArcB2e::CB2eCore::input()
+      → DialogBoxParamW(IDD_PASSWORD)   [Win32 modal dialog]
+          → user enters password
+      → returns ANSI password string via kiVar*
+  → script passes password to external tool via CLI argument
+```
+
+`MainWindow::OpenArchive()` skips its own `PromptPassword()` retry loop when using the B2E
+backend, since B2E scripts handle password prompting internally.
+
+---
+
 ## Settings
 
 INI file: `AileFlow.ini` (same directory as `AileFlow.exe`).
 Structure is compatible with `AileEx.ini`. B2E-irrelevant keys
-(`7zDllPath`, `UnrarDllPath`, `RarExePath`, `RarExtractor`) are not used.
+(`7zDllPath`, `UnrarDllPath`, `RarExePath`, `RarExtractor`) are ignored.
 
 See `../AileEx/docs/specification.md` for the full INI key reference.

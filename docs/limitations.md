@@ -9,12 +9,11 @@ with Noah's B2E script engine. This section documents what is unavailable or deg
 
 | Feature | Reason |
 |---|---|
-| **Integrity test** (`ID_TEST`) | No `test:` directive in the B2E spec; `CArcB2e` has no `v_test()`. Can be added — see Future Extensions below. |
-| **Delete entries** (`ID_DELETE`) | B2E has no mechanism to modify an existing archive. |
-| **Add to current archive** (`ID_ADD_TO_CURRENT`) | B2E always creates new archives; no append operation. |
-| **Archive comment read/write** | No B2E mechanism. `CommentDlg` is disabled. |
-| **Archive properties dialog** | B2E's `list:` returns filenames only; no archive-wide metadata. `PropertiesDlg` is disabled. |
-| **Split volume creation** | `encode:` scripts have no volume-size option. |
+| **Integrity test** (`ID_TEST`) | No `test:` directive in the B2E spec. Clicking Test shows "not supported" and returns immediately. Can be added — see Future Extensions below. |
+| **Delete entries** (`ID_DELETE`) | B2E has no mechanism to modify an existing archive. Menu item is grayed for all B2E-opened archives. |
+| **Add to current archive** (`ID_ADD_TO_CURRENT`) | B2E always creates new archives; no append operation. Menu item is grayed. |
+| **Archive comment write** | B2E has no comment API. Comment dialog opens read-only. |
+| **Split volume creation** | `encode:` scripts have no volume-size option. The volume size field in the compression dialog is ignored. |
 | **Console-mode SFX** | `sfxd:` scripts only create GUI SFX (`7z.sfx`); `7zCon.sfx` is not defined. |
 
 ---
@@ -24,12 +23,15 @@ with Noah's B2E script engine. This section documents what is unavailable or deg
 | Feature | AileEx behavior | AileFlow behavior |
 |---|---|---|
 | **File list columns** | Name / Size / Compressed / Type / Modified — all populated via `IInArchive::GetProperty` | Name / Info (raw `7z.exe l` output line). Size, date, method columns absent initially. |
-| **Password on extraction** | AileFlow's own password dialog shown before the list appears | External tool (7zG.exe / WinRAR.exe) shows its own dialog; not integrated with AileFlow UI. |
-| **Progress reporting** | Percentage + filename in AileFlow's `ProgressDlg` via `IArchiveExtractCallback` | External tool shows its own window (7zG.exe GUI) or no progress. AileFlow's progress dialog is not connected. |
-| **Compression advanced options** | Dictionary size / word size / solid block / threads / split volume — individually configurable | B2E supports only discrete method levels (`method 1`, `method 2`, …) mapped to hardcoded CLI options. `AdvancedCompressDlg` options are not passed through. |
-| **Selective extraction (7z, ZIP)** | Any selected entries can be extracted independently | `7z.b2e` and `zip.zipx.b2e` have no `decode1:` section; selective extraction falls back to full extraction for these formats. RAR / TAR / CAB retain selective extraction via `decode1:`. |
+| **Archive comment read** | Comment retrieved via `IInArchive::GetArchiveProperty(kpidComment)` | Comment is always empty; the dialog opens in read-only mode with no content. |
+| **Archive properties** | Detailed per-archive metadata from `IInArchive::GetArchivePropertyInfo` | Shows entry count and total sizes aggregated from the item list only. No format name, method list, or encrypted-header flag. |
+| **Password on encrypted archives** | AileFlow's own password dialog shown before the list appears | Password dialog shown by the B2E engine's `input()` callback when the `.b2e` script requests it. Timing and appearance depend on the script; not all formats prompt consistently. |
+| **Progress reporting** | Percentage + filename in AileFlow's `ProgressDlg` via `IArchiveExtractCallback` | External tool shows its own window (7zG.exe GUI) or no progress. AileFlow's progress dialog opens but has no data from the external tool. |
+| **Compression advanced options** | Dictionary size / word size / solid block / threads — individually configurable | B2E supports only discrete method levels mapped to hardcoded CLI options. `AdvancedCompressDlg` options (dict size, threads, etc.) are accepted by the dialog but not passed to B2E. |
+| **Selective extraction (7z, ZIP)** | Any selected entries can be extracted independently | `7z.b2e` and `zip.zipx.b2e` have no `decode1:` section; selective extraction falls back to full extraction. RAR / LZH / TAR / CAB retain selective extraction via their `decode1:` sections. |
 | **RAR backend selection** | Switch between 7z.dll and unrar.dll; auto-fallback | Fixed: WinRAR.exe via `rar.b2e`. No fallback. |
-| **Format auto-detection** | Magic-byte detection by 7z.dll | Extension-based matching of `.b2e` filenames only. Files with wrong extensions will not open. |
+| **Format auto-detection** | Magic-byte detection by 7z.dll | Extension-based matching of `.b2e` filenames only. Files with wrong or missing extensions will not open. |
+| **Compression method selection** | Method dropdown populated from `IGetMethodProperties` (lzma, deflate, zstd …) | Method dropdown is not populated; only the compression level slider (0–9) is effective. |
 
 ---
 
@@ -64,9 +66,15 @@ Implementation steps:
 2. Add `m_TstScr` pointer and `scr_mode::mTst` to `CArcB2e`.
 3. Add `v_test()` virtual method to `CArchiver` and implement in `CArcB2e`.
 4. Implement `SevenZipB2e::Test()` to call `v_test()`.
+5. Remove the `GetLoadedPath().empty()` guard in `MainWindow::OnTest()`.
 
 ### Richer List Columns
 
 Parsing `7z.exe l -slt` (technical listing) output provides structured fields
 (Size, Modified, Method, CRC, etc.) for each entry. This would allow populating
 the `ArchiveItem` fields currently left empty, without changing the B2E script interface.
+
+### Selective Extraction for 7z and ZIP
+
+Add a `decode1:` section to `7z.b2e` and `zip.zipx.b2e` that uses `7z.exe e -y -i@<listfile>`
+to extract only the files listed in a temporary response file.

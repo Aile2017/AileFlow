@@ -117,3 +117,12 @@ if(IPO_OK)
 else()
     message(STATUS "IPO/LTO not supported: ${IPO_ERR}")
 endif()
+
+# Copy b2e scripts next to the exe after every build so the engine can find them.
+add_custom_command(TARGET AileFlow POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:AileFlow>/b2e"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/Release/b2e"
+            "$<TARGET_FILE_DIR:AileFlow>/b2e"
+    COMMENT "Copying b2e scripts → $<TARGET_FILE_DIR:AileFlow>/b2e"
+)
