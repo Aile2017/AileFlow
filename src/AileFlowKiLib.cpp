@@ -1,15 +1,21 @@
 // AileFlowKiLib.cpp
-// Satisfies kilib's link-time requirements when using wWinMain instead of kilib_startUp().
-//
-// AileFlow uses AileEx's wWinMain, so kilib_startUp() is never called.
-// kilib_create_new_app() is declared extern in kilib.h and referenced from
-// kl_app.cpp, so it must be defined even though it is never invoked.
-//
-// NOTE (Phase 3): Before B2E archive operations can run, kiStr::init() and
-// kiWindow::init() must be called (they are normally invoked by kilib_startUp()).
-// Add a kilib_standalone_init() call from App::Init() or similar once Phase 3 begins.
+// Satisfies kilib's link-time requirements when using wWinMain instead of kilib_startUp(),
+// and initializes the kilib subsystems AileFlow actually needs.
 
 #include "AileFlowApp.h"
+#include "ArcB2e.h"
 
-// Required by kilib.h / kl_app.cpp — called by kilib_startUp() which AileFlow does not use.
+// Called by kilib_startUp() which AileFlow never invokes.
+// The real initialization happens in KiLibStartup below.
 void kilib_create_new_app() {}
+
+// Initialize kilib subsystems before WinMain runs:
+//   kiStr::standalone_init() - populates st_lb[] so kiStr::next() advances correctly
+//                              over MBCS lead bytes; without this any kiStr loop hangs.
+//   CArcB2e::init_b2e_path() - sets st_base to <exe>\b2e\ so CArcB2e can load scripts.
+static struct KiLibStartup {
+    KiLibStartup() {
+        kiStr::standalone_init();
+        CArcB2e::init_b2e_path();
+    }
+} s_kilib_startup;

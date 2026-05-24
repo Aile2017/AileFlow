@@ -61,6 +61,10 @@ public: //-- Public interface --------------------------
 
 	kiStr& removeTrailWS();
 
+	// Called by AileFlow startup to initialize the MBCS character-advance table
+	// (st_lb[]).  Replaces the private kilib_startUp() path when using wWinMain.
+	static void standalone_init() { init(); }
+
 protected: //-- For derived classes -----------------------------
 
 	char* m_pBuf;
