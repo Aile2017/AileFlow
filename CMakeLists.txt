@@ -27,12 +27,14 @@ set(AILEFLOW_UI_SOURCES
     src/UnrarDll.cpp
     src/RarProcess.cpp
     src/WorkerThread.cpp
-    src/Archiver.cpp
 )
 
 # kilib + B2E engine (no STL, no exceptions, no RTTI — kilib convention)
+# Archiver.cpp uses kilib types (kiStr, kiPath, kiVar) and must be ANSI, not UNICODE.
 set(KILIB_B2E_SOURCES
     src/ArcB2e.cpp
+    src/Archiver.cpp
+    src/AileFlowKiLib.cpp
     kilib/kl_app.cpp
     kilib/kl_cmd.cpp
     kilib/kl_dnd.cpp
@@ -82,9 +84,11 @@ if(MSVC)
     # Disable auto-manifest; the manifest is embedded via AileFlow.rc (1 RT_MANIFEST)
     target_link_options(AileFlow PRIVATE "/MANIFEST:NO")
 
-    # kilib + ArcB2e: compiled without exceptions and RTTI (kilib convention)
+    # kilib + ArcB2e: ANSI narrow-char library — undefine UNICODE and WIN32_LEAN_AND_MEAN
+    # so Win32 macros expand to A-variants (CharLowerA, MessageBoxA, etc.) matching char*.
+    # Removing WIN32_LEAN_AND_MEAN restores shellapi.h (needed for HDROP in kl_wnd.h).
     set_source_files_properties(${KILIB_B2E_SOURCES} PROPERTIES
-        COMPILE_OPTIONS "/EHs-c-;/GR-"
+        COMPILE_OPTIONS "/EHs-c-;/GR-;/UUNICODE;/U_UNICODE;/UWIN32_LEAN_AND_MEAN"
     )
 
     # Release build optimizations:

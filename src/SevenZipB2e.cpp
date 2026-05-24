@@ -10,14 +10,6 @@ void SevenZip::Unload() {}
 std::wstring SevenZip::GetLoadedPath() const { return {}; }
 
 bool SevenZip::IsArchiveExt(const wchar_t*) const { return false; }
-const std::vector<WritableFormat>& SevenZip::GetWritableFormats() const {
-    static std::vector<WritableFormat> s;
-    return s;
-}
-const std::vector<std::wstring>& SevenZip::GetEncoderNames() const {
-    static std::vector<std::wstring> s;
-    return s;
-}
 
 HRESULT SevenZip::OpenArchive(const wchar_t*, std::vector<ArchiveItem>&,
                                const wchar_t*, std::wstring*) { return E_NOTIMPL; }
