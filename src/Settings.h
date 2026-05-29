@@ -113,9 +113,6 @@ public:
     void SetBreakDDir(bool v)                       { m_breakDDir = v; }
 
     // Phase 1: General behavior
-    bool GetStartMinimized() const                  { return m_startMinimized; }
-    void SetStartMinimized(bool v)                  { m_startMinimized = v; }
-
     bool GetOpenFolderAfterExtract() const          { return m_openFolderAfterExtract; }
     void SetOpenFolderAfterExtract(bool v)          { m_openFolderAfterExtract = v; }
 
@@ -174,7 +171,6 @@ private:
     int          m_extStripMode;
     bool         m_stripTrailingNumber;
     bool         m_breakDDir;
-    bool         m_startMinimized;
     bool         m_openFolderAfterExtract;
     std::wstring m_openFolderCommand;
     int          m_concurrentLimit;

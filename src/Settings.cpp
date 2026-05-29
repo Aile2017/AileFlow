@@ -77,9 +77,6 @@ void Settings::Load() {
     GetPrivateProfileStringW(L"General", L"BreakDDir", L"0", buf, 16, m_iniPath);
     m_breakDDir = _wtoi(buf) != 0;
 
-    GetPrivateProfileStringW(L"General", L"StartMinimized", L"0", buf, 16, m_iniPath);
-    m_startMinimized = _wtoi(buf) != 0;
-
     GetPrivateProfileStringW(L"General", L"OpenFolderAfterExtract", L"0", buf, 16, m_iniPath);
     m_openFolderAfterExtract = _wtoi(buf) != 0;
 
@@ -157,7 +154,6 @@ void Settings::Save() const {
     WriteStr(L"General", L"ExtStripMode", buf);
     WriteStr(L"General", L"StripTrailingNumber", m_stripTrailingNumber ? L"1" : L"0");
     WriteStr(L"General", L"BreakDDir",           m_breakDDir           ? L"1" : L"0");
-    WriteStr(L"General", L"StartMinimized",       m_startMinimized      ? L"1" : L"0");
     WriteStr(L"General", L"OpenFolderAfterExtract", m_openFolderAfterExtract ? L"1" : L"0");
     WriteStr(L"General", L"OpenFolderCommand",    m_openFolderCommand.c_str());
     _itow_s(m_concurrentLimit, buf, 10);

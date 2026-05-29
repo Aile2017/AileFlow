@@ -163,7 +163,7 @@ BEGIN
     PUSHBUTTON      "Cancel",          IDC_CANCEL,     116,  54,   68, 14
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 280, 286
+IDD_SETTINGS DIALOGEX 0, 0, 280, 270
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Settings"
 FONT 9, "Segoe UI", 400, 0, 0x1
@@ -191,12 +191,11 @@ BEGIN
     EDITTEXT        IDC_FONT_NAME,      64, 192, 155,  14, ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...",              IDC_BROWSE_FONT,223, 192,  38,  14
 
-    GROUPBOX        "Behavior",          IDC_STATIC,     7, 218, 266,  42
-    AUTOCHECKBOX    "Start minimized",  IDC_START_MINIMIZED,   14, 230, 150,  9
-    AUTOCHECKBOX    "Open output folder after extraction", IDC_OPEN_FOLDER_AFTER, 14, 243, 200, 9
+    GROUPBOX        "Behavior",          IDC_STATIC,     7, 218, 266,  26
+    AUTOCHECKBOX    "Open output folder after extraction", IDC_OPEN_FOLDER_AFTER, 14, 230, 200, 9
 
-    DEFPUSHBUTTON   "OK",               IDOK,          168, 268,  50,  14
-    PUSHBUTTON      "Cancel",           IDCANCEL,      222, 268,  50,  14
+    DEFPUSHBUTTON   "OK",               IDOK,          168, 252,  50,  14
+    PUSHBUTTON      "Cancel",           IDCANCEL,      222, 252,  50,  14
 END
 
 IDD_INFO DIALOGEX 0, 0, 340, 280
@@ -618,7 +617,7 @@ BEGIN
     PUSHBUTTON      "キャンセル",       IDC_CANCEL,     116,  54,   68, 14
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 280, 286
+IDD_SETTINGS DIALOGEX 0, 0, 280, 270
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "設定"
 FONT 9, "Segoe UI", 400, 0, 0x1
@@ -646,12 +645,11 @@ BEGIN
     EDITTEXT        IDC_FONT_NAME,      64, 192, 155,  14, ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...",              IDC_BROWSE_FONT,223, 192,  38,  14
 
-    GROUPBOX        "動作",              IDC_STATIC,     7, 218, 266,  42
-    AUTOCHECKBOX    "最小化で起動する",  IDC_START_MINIMIZED,   14, 230, 150,  9
-    AUTOCHECKBOX    "展開後にフォルダを開く", IDC_OPEN_FOLDER_AFTER, 14, 243, 180, 9
+    GROUPBOX        "動作",              IDC_STATIC,     7, 218, 266,  26
+    AUTOCHECKBOX    "展開後にフォルダを開く", IDC_OPEN_FOLDER_AFTER, 14, 230, 180, 9
 
-    DEFPUSHBUTTON   "OK",               IDOK,          168, 268,  50,  14
-    PUSHBUTTON      "キャンセル",        IDCANCEL,      222, 268,  50,  14
+    DEFPUSHBUTTON   "OK",               IDOK,          168, 252,  50,  14
+    PUSHBUTTON      "キャンセル",        IDCANCEL,      222, 252,  50,  14
 END
 
 IDD_INFO DIALOGEX 0, 0, 340, 280

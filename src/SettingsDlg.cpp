@@ -87,8 +87,6 @@ void SettingsDlg::OnInit(HWND hwnd) {
     CheckDlgButton(hwnd, IDC_STRIP_TRAILING_NUM,  s.GetStripTrailingNumber()    ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(hwnd, IDC_COLLAPSE_SINGLE_DIR, s.GetBreakDDir()              ? BST_CHECKED : BST_UNCHECKED);
 
-    // Phase 1: General behavior
-    CheckDlgButton(hwnd, IDC_START_MINIMIZED,  s.GetStartMinimized()        ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(hwnd, IDC_OPEN_FOLDER_AFTER, s.GetOpenFolderAfterExtract() ? BST_CHECKED : BST_UNCHECKED);
 }
 
@@ -150,7 +148,6 @@ bool SettingsDlg::OnOK(HWND hwnd) {
     }
     s.SetStripTrailingNumber(IsDlgButtonChecked(hwnd, IDC_STRIP_TRAILING_NUM)  == BST_CHECKED);
     s.SetBreakDDir(          IsDlgButtonChecked(hwnd, IDC_COLLAPSE_SINGLE_DIR) == BST_CHECKED);
-    s.SetStartMinimized(     IsDlgButtonChecked(hwnd, IDC_START_MINIMIZED)     == BST_CHECKED);
     s.SetOpenFolderAfterExtract(IsDlgButtonChecked(hwnd, IDC_OPEN_FOLDER_AFTER) == BST_CHECKED);
 
     s.Save();

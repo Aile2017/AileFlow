@@ -41,8 +41,6 @@ void App::ReloadDlls() {
 
 int App::RunBrowseMode(const std::vector<std::wstring>& archivePaths, int nCmdShow) {
     MainWindow wnd;
-    if (m_settings.GetStartMinimized() && nCmdShow == SW_SHOWDEFAULT)
-        nCmdShow = SW_MINIMIZE;
     if (!wnd.Create(m_hInst, nCmdShow)) return 1;
 
     for (auto& p : archivePaths)

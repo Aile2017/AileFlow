@@ -83,7 +83,6 @@
 #define IDC_EXT_STRIP_KEEP      3019  // Keep all extensions
 #define IDC_STRIP_TRAILING_NUM  3020  // Strip trailing digits/-/_/. from stem
 #define IDC_COLLAPSE_SINGLE_DIR 3021  // Collapse single-subfolder output (break_ddir)
-#define IDC_START_MINIMIZED     3022  // Start minimized
 #define IDC_OPEN_FOLDER_AFTER   3023  // Open output folder after extraction
 
 // Info dialog controls
