@@ -12,6 +12,7 @@
 #include "resource.h"
 #include <shellapi.h>
 #include <shlobj.h>
+#include <ole2.h>
 #include <shobjidl_core.h>
 #include <shlwapi.h>
 #include <commdlg.h>
@@ -218,6 +219,94 @@ bool ShouldCreateSubfolder(int mkDir, const std::vector<ArchiveItem>& items) {
             return false; // Top-level directory exists
     }
     return true;
+}
+
+// ---- Drag-out (IDropSource + IDataObject) ----
+
+class DropSource final : public IDropSource {
+    ULONG m_ref = 1;
+public:
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+        if (riid == IID_IUnknown || riid == IID_IDropSource)
+            { *ppv = this; AddRef(); return S_OK; }
+        *ppv = nullptr; return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef()  override { return ++m_ref; }
+    ULONG STDMETHODCALLTYPE Release() override { if (!--m_ref) { delete this; return 0; } return m_ref; }
+    HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL esc, DWORD ks) override {
+        if (esc) return DRAGDROP_S_CANCEL;
+        if (!(ks & MK_LBUTTON)) return DRAGDROP_S_DROP;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD) override {
+        return DRAGDROP_S_USEDEFAULTCURSORS;
+    }
+};
+
+class DropDataObject final : public IDataObject {
+    ULONG   m_ref  = 1;
+    HGLOBAL m_hDrop;
+public:
+    explicit DropDataObject(HGLOBAL hDrop) : m_hDrop(hDrop) {}
+    ~DropDataObject() { if (m_hDrop) GlobalFree(m_hDrop); }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+        if (riid == IID_IUnknown || riid == IID_IDataObject)
+            { *ppv = this; AddRef(); return S_OK; }
+        *ppv = nullptr; return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef()  override { return ++m_ref; }
+    ULONG STDMETHODCALLTYPE Release() override { if (!--m_ref) { delete this; return 0; } return m_ref; }
+
+    HRESULT STDMETHODCALLTYPE GetData(FORMATETC* pfe, STGMEDIUM* pstgm) override {
+        if (pfe->cfFormat != CF_HDROP || !(pfe->tymed & TYMED_HGLOBAL))
+            return DV_E_FORMATETC;
+        SIZE_T sz = GlobalSize(m_hDrop);
+        HGLOBAL hCopy = GlobalAlloc(GHND, sz);
+        if (!hCopy) return E_OUTOFMEMORY;
+        memcpy(GlobalLock(hCopy), GlobalLock(m_hDrop), sz);
+        GlobalUnlock(m_hDrop); GlobalUnlock(hCopy);
+        pstgm->tymed = TYMED_HGLOBAL; pstgm->hGlobal = hCopy; pstgm->pUnkForRelease = nullptr;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC*, STGMEDIUM*) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE QueryGetData(FORMATETC* pfe) override {
+        return (pfe->cfFormat == CF_HDROP && (pfe->tymed & TYMED_HGLOBAL)) ? S_OK : DV_E_FORMATETC;
+    }
+    HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(FORMATETC*, FORMATETC* pOut) override {
+        pOut->ptd = nullptr; return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE SetData(FORMATETC*, STGMEDIUM*, BOOL) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dir, IEnumFORMATETC** pp) override {
+        if (dir != DATADIR_GET) return E_NOTIMPL;
+        FORMATETC fe = { CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+        return SHCreateStdEnumFmtEtc(1, &fe, pp);
+    }
+    HRESULT STDMETHODCALLTYPE DAdvise(FORMATETC*, DWORD, IAdviseSink*, DWORD*) override { return OLE_E_ADVISENOTSUPPORTED; }
+    HRESULT STDMETHODCALLTYPE DUnadvise(DWORD) override { return OLE_E_ADVISENOTSUPPORTED; }
+    HRESULT STDMETHODCALLTYPE EnumDAdvise(IEnumSTATDATA**) override { return OLE_E_ADVISENOTSUPPORTED; }
+};
+
+static HGLOBAL BuildHDrop(const std::vector<std::wstring>& paths) {
+    size_t totalWch = 1;  // final double-null terminator
+    for (const auto& p : paths) totalWch += p.size() + 1;
+
+    HGLOBAL hg = GlobalAlloc(GHND, sizeof(DROPFILES) + totalWch * sizeof(wchar_t));
+    if (!hg) return nullptr;
+
+    auto* df = static_cast<DROPFILES*>(GlobalLock(hg));
+    df->pFiles = sizeof(DROPFILES);
+    df->fWide  = TRUE;
+    df->pt     = { 0, 0 };
+    df->fNC    = FALSE;
+    auto* wp = reinterpret_cast<wchar_t*>(df + 1);
+    for (const auto& p : paths) {
+        wcscpy_s(wp, p.size() + 1, p.c_str());
+        wp += p.size() + 1;
+    }
+    *wp = L'\0';
+    GlobalUnlock(hg);
+    return hg;
 }
 
 } // namespace
@@ -433,6 +522,8 @@ LRESULT MainWindow::HandleMsg(UINT msg, WPARAM wp, LPARAM lp) {
             auto* nm = reinterpret_cast<NMLISTVIEW*>(lp);
             OnColumnClick(nm->iSubItem);
         }
+        if (hdr->hwndFrom == m_hListView && hdr->code == LVN_BEGINDRAG)
+            OnListBeginDrag();
         if (hdr->code == TTN_GETDISPINFOW) {
             auto* pdi = reinterpret_cast<NMTTDISPINFOW*>(lp);
             UINT id = 0;
@@ -1017,6 +1108,56 @@ void MainWindow::OnCommand(WORD id) {
 void MainWindow::OnTreeSelChanged() {
     std::wstring folder = SelectedFolderPath();
     PopulateList(folder);
+}
+
+void MainWindow::OnListBeginDrag() {
+    if (m_archivePath.empty() || m_items.empty()) return;
+
+    // Collect selected file indices (skip directories and virtual folders).
+    std::vector<UINT32> indices;
+    int item = -1;
+    while ((item = ListView_GetNextItem(m_hListView, item, LVNI_SELECTED)) != -1) {
+        LVITEMW lvi = {}; lvi.iItem = item; lvi.mask = LVIF_PARAM;
+        ListView_GetItem(m_hListView, &lvi);
+        UINT32 idx = (UINT32)lvi.lParam;
+        if (idx < (UINT32)m_items.size() && !m_items[idx].isDir)
+            indices.push_back(idx);
+    }
+    if (indices.empty()) return;
+
+    // Create session temp dir on first use (deleted on exit).
+    if (m_tempViewDir.empty()) {
+        wchar_t base[MAX_PATH] = {}, buf[MAX_PATH] = {};
+        GetTempPathW(MAX_PATH, base);
+        GetTempFileNameW(base, L"aex", 0, buf);
+        DeleteFileW(buf);
+        m_tempViewDir = std::wstring(buf) + L"\\";
+        SHCreateDirectoryExW(nullptr, m_tempViewDir.c_str(), nullptr);
+    }
+
+    // Extract selected files to the temp dir.
+    const wchar_t* pw = m_password.empty() ? nullptr : m_password.c_str();
+    HRESULT hr = App::Instance().Get7z().Extract(
+        m_effectiveArchivePath.c_str(), indices, m_tempViewDir.c_str(), pw, nullptr);
+    if (FAILED(hr)) return;
+
+    // Build local filesystem paths for HDROP.
+    std::vector<std::wstring> localPaths;
+    for (UINT32 idx : indices) {
+        std::wstring rel = m_items[idx].path;
+        for (auto& c : rel) if (c == L'/') c = L'\\';
+        localPaths.push_back(m_tempViewDir + rel);
+    }
+
+    HGLOBAL hDrop = BuildHDrop(localPaths);
+    if (!hDrop) return;
+
+    auto* pData   = new DropDataObject(hDrop);
+    auto* pSource = new DropSource();
+    DWORD effect  = 0;
+    DoDragDrop(pData, pSource, DROPEFFECT_COPY, &effect);
+    pSource->Release();
+    pData->Release();
 }
 
 void MainWindow::OnListDblClick() {

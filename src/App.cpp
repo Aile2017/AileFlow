@@ -22,6 +22,8 @@ bool App::Init(HINSTANCE hInst) {
 
     m_settings.Load();
 
+    OleInitialize(nullptr);  // Required for DoDragDrop (drag-out support).
+
     m_sevenZip.Load(nullptr);  // B2E backend always succeeds; path parameter is ignored.
 
     if (!MainWindow::RegisterClass(hInst)) return false;
@@ -32,6 +34,7 @@ bool App::Init(HINSTANCE hInst) {
 void App::Shutdown() {
     m_sevenZip.Unload();
     m_settings.Save();
+    OleUninitialize();
 }
 
 void App::ReloadDlls() {

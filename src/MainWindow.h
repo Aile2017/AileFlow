@@ -35,6 +35,7 @@ private:
     void OnCommand(WORD id);
     void OnTreeSelChanged();
     void OnListDblClick();
+    void OnListBeginDrag();
     void OnExtract(const std::wstring& presetDest = L"");
     void OnExtractSelected(const std::wstring& presetDest = L"");
     // Toolbar extract: extract selected items if any are selected, otherwise extract all.
