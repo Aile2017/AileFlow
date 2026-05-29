@@ -12,6 +12,7 @@ private:
 
     void OnInit(HWND hwnd);
     void OnBrowseDir(HWND hwnd);
+    void OnBrowseFont(HWND hwnd);
     bool OnOK(HWND hwnd);
 
     HWND m_hwnd = nullptr;

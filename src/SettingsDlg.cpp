@@ -39,6 +39,9 @@ INT_PTR SettingsDlg::HandleMsg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         case IDC_BROWSE_DIR:
             OnBrowseDir(hwnd);
             break;
+        case IDC_BROWSE_FONT:
+            OnBrowseFont(hwnd);
+            break;
         case IDOK:
             if (OnOK(hwnd)) EndDialog(hwnd, IDOK);
             break;
@@ -54,22 +57,8 @@ INT_PTR SettingsDlg::HandleMsg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 void SettingsDlg::OnInit(HWND hwnd) {
     Settings& s = App::Instance().GetSettings();
 
-    // Font combo
-    HWND hFont = GetDlgItem(hwnd, IDC_FONT_NAME);
-    // Common font options
-    std::wstring fonts[] = {L"Segoe UI", L"Meiryo UI", L"Yu Gothic", L"Arial", L"Tahoma", L"Courier New"};
-    int fontSel = -1;
-    std::wstring currentFont = s.GetFontName();
-    for (size_t i = 0; i < 6; ++i) {
-        SendMessageW(hFont, CB_ADDSTRING, 0, (LPARAM)fonts[i].c_str());
-        if (fonts[i] == currentFont) fontSel = (int)i;
-    }
-    // The saved font may not be one of the presets (e.g. set manually in the ini).
-    // Add it so the dialog reflects the actual value instead of silently resetting it.
-    if (fontSel < 0 && !currentFont.empty())
-        fontSel = (int)SendMessageW(hFont, CB_ADDSTRING, 0, (LPARAM)currentFont.c_str());
-    if (fontSel < 0) fontSel = 0;
-    SendMessageW(hFont, CB_SETCURSEL, fontSel, 0);
+    // Font — show current name; user opens ChooseFont via "..." button.
+    SetDlgItemTextW(hwnd, IDC_FONT_NAME, s.GetFontName().c_str());
 
     // Output dir mode radio buttons
     bool fixedMode = s.GetOutputDirModeFixed();
@@ -101,6 +90,26 @@ void SettingsDlg::OnInit(HWND hwnd) {
     // Phase 1: General behavior
     CheckDlgButton(hwnd, IDC_START_MINIMIZED,  s.GetStartMinimized()        ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(hwnd, IDC_OPEN_FOLDER_AFTER, s.GetOpenFolderAfterExtract() ? BST_CHECKED : BST_UNCHECKED);
+}
+
+void SettingsDlg::OnBrowseFont(HWND hwnd) {
+    wchar_t faceName[LF_FACESIZE] = {};
+    GetDlgItemTextW(hwnd, IDC_FONT_NAME, faceName, LF_FACESIZE);
+
+    LOGFONTW lf = {};
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfHeight  = -12;
+    wcsncpy_s(lf.lfFaceName, faceName, LF_FACESIZE - 1);
+
+    CHOOSEFONTW cf   = {};
+    cf.lStructSize   = sizeof(cf);
+    cf.hwndOwner     = hwnd;
+    cf.lpLogFont     = &lf;
+    cf.Flags         = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT |
+                       CF_NOVERTFONTS | CF_NOSCRIPTSEL;
+
+    if (ChooseFontW(&cf))
+        SetDlgItemTextW(hwnd, IDC_FONT_NAME, lf.lfFaceName);
 }
 
 void SettingsDlg::OnBrowseDir(HWND hwnd) {

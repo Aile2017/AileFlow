@@ -188,7 +188,8 @@ BEGIN
 
     GROUPBOX        "Font",              IDC_STATIC,     7, 180, 266,  30
     LTEXT           "Font:",             IDC_STATIC,    14, 194,  48,   8
-    COMBOBOX        IDC_FONT_NAME,      64, 192, 150, 100, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_FONT_NAME,      64, 192, 155,  14, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",              IDC_BROWSE_FONT,223, 192,  38,  14
 
     GROUPBOX        "Behavior",          IDC_STATIC,     7, 218, 266,  42
     AUTOCHECKBOX    "Start minimized",  IDC_START_MINIMIZED,   14, 230, 150,  9
@@ -642,7 +643,8 @@ BEGIN
 
     GROUPBOX        "フォント",          IDC_STATIC,     7, 180, 266,  30
     LTEXT           "フォント:",         IDC_STATIC,    14, 194,  48,   8
-    COMBOBOX        IDC_FONT_NAME,      64, 192, 150, 100, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_FONT_NAME,      64, 192, 155,  14, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",              IDC_BROWSE_FONT,223, 192,  38,  14
 
     GROUPBOX        "動作",              IDC_STATIC,     7, 218, 266,  42
     AUTOCHECKBOX    "最小化で起動する",  IDC_START_MINIMIZED,   14, 230, 150,  9

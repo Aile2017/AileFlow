@@ -74,6 +74,9 @@
 #define IDC_OUTDIR_SOURCE   3015   // Same as source file location
 #define IDC_OUTDIR_FIXED    3016   // Use fixed DefaultOutputDir
 
+// Font picker button (opens ChooseFont dialog)
+#define IDC_BROWSE_FONT         3024
+
 // Phase 1+2: Extraction behavior and general behavior controls
 #define IDC_EXT_STRIP_ALL       3017  // Strip all known extensions (default)
 #define IDC_EXT_STRIP_ONE       3018  // Strip one extension only
