@@ -62,15 +62,8 @@
 #define IDC_ELAPSED         2004
 
 // Settings dialog controls
-#define IDC_RAR_EXTRACTOR   3001
 #define IDC_DEFAULT_DIR     3002
 #define IDC_BROWSE_DIR      3003
-#define IDC_7Z_DLL_PATH     3004
-#define IDC_BROWSE_7Z       3005
-#define IDC_UNRAR_DLL_PATH  3006
-#define IDC_BROWSE_UNRAR    3007
-#define IDC_RAR_EXE_PATH    3008
-#define IDC_BROWSE_RAR      3009
 // Extract subfolder creation policy (0=never / 1=single file / 2=multiple files / 3=always)
 #define IDC_MKDIR_0         3010
 #define IDC_MKDIR_1         3011

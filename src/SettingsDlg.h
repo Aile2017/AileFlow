@@ -12,7 +12,6 @@ private:
 
     void OnInit(HWND hwnd);
     void OnBrowseDir(HWND hwnd);
-    void OnBrowseFile(HWND hwnd, int pathCtrlId, UINT filterId, UINT titleId);
     bool OnOK(HWND hwnd);
 
     HWND m_hwnd = nullptr;
