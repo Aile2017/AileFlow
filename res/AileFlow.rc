@@ -272,7 +272,6 @@ BEGIN
     IDS_YES                         "Yes"
     IDS_NO                          "No"
 
-    IDS_PROGRESS_COMPRESSING        "Compressing..."
     IDS_PROGRESS_EXTRACTING         "Extracting..."
     IDS_PROGRESS_TESTING            "Testing..."
     IDS_PROGRESS_DELETING           "Deleting..."
@@ -726,7 +725,6 @@ BEGIN
     IDS_YES                         "はい"
     IDS_NO                          "いいえ"
 
-    IDS_PROGRESS_COMPRESSING        "圧縮中..."
     IDS_PROGRESS_EXTRACTING         "展開中..."
     IDS_PROGRESS_TESTING            "テスト中..."
     IDS_PROGRESS_DELETING           "削除中..."

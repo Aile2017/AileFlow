@@ -2,7 +2,6 @@
 #include "MainWindow.h"
 #include "CompressDlg.h"
 #include "I18n.h"
-#include "ProgressDlg.h"
 #include "WorkerThread.h"
 #include "resource.h"
 #include <commctrl.h>
@@ -150,16 +149,10 @@ int App::RunCompressMode(const std::vector<std::wstring>& filePaths, int nCmdSho
         m_settings.Save();
     }
 
-    ProgressDlg progDlg;
-    progDlg.Show(wnd.Hwnd(), I18n::Tr(IDS_PROGRESS_COMPRESSING).c_str());
-
     {
-        auto* sink = new ProgressPostSink(wnd.Hwnd(), WM_APP_PROGRESS, WM_APP_DONE);
-        auto& sz   = m_sevenZip;
-        progDlg.SetSink(sink);
-
+        auto& sz = m_sevenZip;
         WorkerThread worker;
-        worker.Start([&sz, params, sink]() -> HRESULT {
+        worker.Start([&sz, params]() -> HRESULT {
             const wchar_t* pw = params.password.empty() ? nullptr : params.password.c_str();
             CompressAdvanced adv;
             adv.dictSize   = params.dictSize;
@@ -170,13 +163,17 @@ int App::RunCompressMode(const std::vector<std::wstring>& filePaths, int nCmdSho
             adv.volumeSize = params.volumeSize;
             return sz.Compress(params.inputFiles, params.outputPath.c_str(),
                                params.format.c_str(), params.level,
-                               params.method.c_str(), pw, sink, &adv,
+                               params.method.c_str(), pw, nullptr, &adv,
                                params.encryptHeaders);
         }, wnd.Hwnd(), WM_APP_DONE);
 
-        progDlg.RunMessageLoop();
+        MSG msg;
+        while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
+            if (msg.message == WM_APP_DONE) break;
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
         worker.Wait();
-        delete sink;
     }
     return 0;
 }
@@ -218,15 +215,10 @@ int App::RunCompressEachMode(const std::vector<std::wstring>& filePaths, int nCm
         if (params.outputPath.find(L'.') == std::wstring::npos)
             params.outputPath += L"." + params.format;
 
-        ProgressDlg progDlg;
-        progDlg.Show(wnd.Hwnd(), I18n::Tr(IDS_PROGRESS_COMPRESSING).c_str());
-
         {
-            auto* sink = new ProgressPostSink(wnd.Hwnd(), WM_APP_PROGRESS, WM_APP_DONE);
-            auto& sz   = m_sevenZip;
-            progDlg.SetSink(sink);
+            auto& sz = m_sevenZip;
             WorkerThread worker;
-            worker.Start([&sz, params, sink]() -> HRESULT {
+            worker.Start([&sz, params]() -> HRESULT {
                 const wchar_t* pw = params.password.empty() ? nullptr : params.password.c_str();
                 CompressAdvanced adv;
                 adv.dictSize   = params.dictSize;
@@ -237,11 +229,15 @@ int App::RunCompressEachMode(const std::vector<std::wstring>& filePaths, int nCm
                 adv.volumeSize = params.volumeSize;
                 return sz.Compress(params.inputFiles, params.outputPath.c_str(),
                                    params.format.c_str(), params.level,
-                                   params.method.c_str(), pw, sink, &adv, params.encryptHeaders);
+                                   params.method.c_str(), pw, nullptr, &adv, params.encryptHeaders);
             }, wnd.Hwnd(), WM_APP_DONE);
-            progDlg.RunMessageLoop();
+            MSG msg;
+            while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
+                if (msg.message == WM_APP_DONE) break;
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
             worker.Wait();
-            delete sink;
         }
     }
     return 0;

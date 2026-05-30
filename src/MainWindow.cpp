@@ -2009,13 +2009,6 @@ void MainWindow::OnCompress(CompressDlg::Params& params, bool openAfterCompress)
     auto  method  = params.method;
     auto  pw      = params.password;
 
-    ProgressDlg progDlg;
-    progDlg.Show(m_hwnd, I18n::Tr(IDS_PROGRESS_COMPRESSING).c_str());
-
-    auto* sink = new ProgressPostSink(m_hwnd, WM_APP_PROGRESS, WM_APP_DONE);
-    m_pSink = sink;
-    progDlg.SetSink(sink);
-
     auto& sz = App::Instance().Get7z();
     auto advDict    = params.dictSize;
     auto advWord    = params.wordSize;
@@ -2024,7 +2017,7 @@ void MainWindow::OnCompress(CompressDlg::Params& params, bool openAfterCompress)
     auto advExtra   = params.extra;
     auto advVolume  = params.volumeSize;
     bool encHdr     = params.encryptHeaders;
-    m_worker.Start([&sz, inputs, outPath, format, level, method, pw, sink,
+    m_worker.Start([&sz, inputs, outPath, format, level, method, pw,
                     advDict, advWord, advSolid, advThreads, advExtra, advVolume,
                     encHdr]() -> HRESULT {
         CompressAdvanced adv;
@@ -2036,13 +2029,19 @@ void MainWindow::OnCompress(CompressDlg::Params& params, bool openAfterCompress)
         adv.volumeSize = advVolume;
         return sz.Compress(inputs, outPath.c_str(), format.c_str(),
                            level, method.c_str(), pw.empty() ? nullptr : pw.c_str(),
-                           sink, &adv, encHdr);
+                           nullptr, &adv, encHdr);
     }, m_hwnd, WM_APP_DONE);
-    HRESULT hrDone = progDlg.RunMessageLoop();
-    m_worker.Wait();
 
-    delete sink;
-    m_pSink = nullptr;
+    HRESULT hrDone = S_OK;
+    MSG msg;
+    while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
+        if (msg.message == WM_APP_DONE) { hrDone = (HRESULT)msg.wParam; break; }
+        if (!IsDialogMessageW(m_hwnd, &msg)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    m_worker.Wait();
 
     if (FAILED(hrDone) && hrDone != E_ABORT) {
         ShowError(I18n::Tr(IDS_ERR_COMPRESS_FAILED).c_str(), hrDone);

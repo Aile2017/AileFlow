@@ -157,7 +157,6 @@
 #define IDS_NO                          11011
 
 // --- Progress / Status ---
-#define IDS_PROGRESS_COMPRESSING        11020
 #define IDS_PROGRESS_EXTRACTING         11021
 #define IDS_PROGRESS_TESTING            11022
 #define IDS_PROGRESS_DELETING           11023
