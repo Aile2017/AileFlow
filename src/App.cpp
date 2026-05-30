@@ -5,6 +5,7 @@
 #include "WorkerThread.h"
 #include "resource.h"
 #include <commctrl.h>
+#include <ole2.h>
 
 App& App::Instance() {
     static App inst;
@@ -34,11 +35,6 @@ void App::Shutdown() {
     m_sevenZip.Unload();
     m_settings.Save();
     OleUninitialize();
-}
-
-void App::ReloadDlls() {
-    m_sevenZip.Unload();
-    m_sevenZip.Load(nullptr);
 }
 
 int App::RunBrowseMode(const std::vector<std::wstring>& archivePaths, int nCmdShow) {

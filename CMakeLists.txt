@@ -50,7 +50,6 @@ add_executable(AileFlow WIN32
 
 target_include_directories(AileFlow PRIVATE
     src
-    sdk
     ${CMAKE_SOURCE_DIR}  # exposes kilib/ as #include "kilib/kilib.h"
 )
 

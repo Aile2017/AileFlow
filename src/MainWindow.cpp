@@ -1577,54 +1577,6 @@ void MainWindow::OnFileOpen() {
     pfd->Release();
 }
 
-// Extract VS_VERSION_INFO FileVersion string from file.
-// Returns empty string if unavailable.
-static std::wstring GetFileVersionString(const wchar_t* path) {
-    if (!path || !path[0]) return {};
-    DWORD handle = 0;
-    DWORD size = GetFileVersionInfoSizeW(path, &handle);
-    if (!size) return {};
-    std::vector<BYTE> buf(size);
-    if (!GetFileVersionInfoW(path, handle, size, buf.data())) return {};
-
-    // Get language code from translation table and query StringFileInfo\xxxx\FileVersion.
-    // Most third-party DLLs/EXEs store a display string like "26.00ZSv1.5.7R1".
-    struct LangCp { WORD lang; WORD cp; };
-    LangCp* trans = nullptr;
-    UINT len = 0;
-    if (VerQueryValueW(buf.data(), L"\\VarFileInfo\\Translation",
-                       (void**)&trans, &len) && trans && len >= sizeof(LangCp)) {
-        wchar_t key[80];
-        swprintf_s(key, L"\\StringFileInfo\\%04x%04x\\FileVersion",
-                   trans[0].lang, trans[0].cp);
-        wchar_t* val = nullptr;
-        UINT vlen = 0;
-        if (VerQueryValueW(buf.data(), key, (void**)&val, &vlen) && val && vlen > 0) {
-            std::wstring s = val;
-            // Trim trailing control characters and spaces
-            while (!s.empty() && (s.back() == L' ' || s.back() == L'\0')) s.pop_back();
-            if (!s.empty()) return s;
-        }
-    }
-
-    // Fallback: numeric fields from VS_FIXEDFILEINFO
-    VS_FIXEDFILEINFO* ffi = nullptr;
-    if (VerQueryValueW(buf.data(), L"\\", (void**)&ffi, &len) && ffi) {
-        wchar_t out[64];
-        swprintf_s(out, L"%u.%u.%u.%u",
-                   HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS),
-                   HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
-        return out;
-    }
-    return {};
-}
-
-// Extract the leaf name from a path (backslash-separated)
-static std::wstring LeafName(const std::wstring& path) {
-    auto pos = path.find_last_of(L"\\/");
-    return (pos == std::wstring::npos) ? path : path.substr(pos + 1);
-}
-
 static INT_PTR CALLBACK AboutDlgProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM /*lp*/) {
     if (msg == WM_INITDIALOG) {
         App& app = App::Instance();

@@ -31,7 +31,6 @@
 #define IDC_METHOD          1005
 #define IDC_PASSWORD        1006
 #define IDC_ENCRYPT_HDR     1007
-#define IDC_INPUT_LIST      1008
 #define IDC_ADV_BUTTON      1009
 #define IDC_SFX_MODE        1010
 
@@ -142,7 +141,6 @@
 
 // --- Progress / Status ---
 #define IDS_PROGRESS_EXTRACTING         11021
-#define IDS_PROGRESS_TESTING            11022
 #define IDS_PROGRESS_DELETING           11023
 #define IDS_PROGRESS_ADDING             11024
 #define IDS_FMT_STATUS_ENTRIES          11026
@@ -175,44 +173,30 @@
 // --- File dialog filters / titles (filter strings use '|' as NUL sentinel) ---
 #define IDS_FILTER_ARCHIVE              11060
 #define IDS_FILTER_ALL_FILES            11061
-#define IDS_FILTER_EXE                  11062
-#define IDS_FILTER_DLL                  11063
 #define IDS_TITLE_OPEN_ARCHIVE          11064
 #define IDS_TITLE_SELECT_OUTPUT         11065
 #define IDS_TITLE_SELECT_COMPRESS       11066
 #define IDS_TITLE_SELECT_ADD            11067
-#define IDS_TITLE_SELECT_RAR            11068
-#define IDS_TITLE_SELECT_7Z_DLL         11069
-#define IDS_TITLE_SELECT_UNRAR_DLL      11070
 #define IDS_TITLE_SELECT_DEFAULT_DIR    11071
 #define IDS_TITLE_SELECT_DEST_FOLDER    11072
 
 // --- MainWindow / general messages ---
 #define IDS_ERR_OPEN_ARCHIVE            11080
-#define IDS_ERR_OPEN_ARCHIVE_7Z_UNRAR   11081
-#define IDS_ERR_OPEN_ARCHIVE_7Z         11082
 #define IDS_INFO_SELECT_FILE            11083
 #define IDS_INFO_FOLDERS_NOT_VIEWABLE   11084
-#define IDS_VIEW_REQUIRES_7Z            11085
 #define IDS_ERR_EXTRACT_FILE_FAILED     11086
 #define IDS_FMT_NO_ASSOC_APP            11087
 #define IDS_ERR_EXTRACT_FAILED          11088
 #define IDS_INFO_NO_FILES_SELECTED      11089
 #define IDS_INFO_NO_ARCHIVE_TO_TEST     11090
-#define IDS_TEST_OK                     11091
-#define IDS_TEST_FAILED                 11092
 #define IDS_FMT_FILE_NOT_FOUND          11093
 #define IDS_MRU_NO_HISTORY              11094
 #define IDS_OP_FAILED                   11095
 #define IDS_ERR_ADD_FAILED              11096
-#define IDS_ERR_RAR_LAUNCH              11098
 #define IDS_FMT_DELETE_CONFIRM          11100
 #define IDS_TITLE_DELETE_CONFIRM        11101
 #define IDS_ERR_DELETE_FAILED           11102
 #define IDS_ERR_COMPRESS_FAILED         11103
-#define IDS_FMT_SFX_NOT_FOUND_7Z        11104
-#define IDS_FMT_SFX_NOT_FOUND_RAR       11105
-#define IDS_ERR_RAR_NOT_FOUND           11106
 #define IDS_ERR_OP_NOT_SUPPORTED        11107
 
 // --- Drag & Drop ---
@@ -232,63 +216,11 @@
 #define IDS_LEVEL_9                     11130
 #define IDS_INFO_SPECIFY_OUTPUT         11131
 
-// --- SevenZip PropID names ---
-#define IDS_PROP_PATH                   11200
-#define IDS_PROP_NAME                   11201
-#define IDS_PROP_EXTENSION              11202
-#define IDS_PROP_IS_DIR                 11203
-#define IDS_PROP_SIZE                   11204
-#define IDS_PROP_PACK_SIZE              11205
-#define IDS_PROP_ATTRIB                 11206
-#define IDS_PROP_CTIME                  11207
-#define IDS_PROP_ATIME                  11208
-#define IDS_PROP_MTIME                  11209
-#define IDS_PROP_SOLID                  11210
-#define IDS_PROP_COMMENTED              11211
-#define IDS_PROP_ENCRYPTED              11212
-#define IDS_PROP_DICT_SIZE              11213
-#define IDS_PROP_TYPE                   11214
-#define IDS_PROP_METHOD                 11215
-#define IDS_PROP_HOST_OS                11216
-#define IDS_PROP_FILE_SYSTEM            11217
-#define IDS_PROP_USER                   11218
-#define IDS_PROP_GROUP                  11219
-#define IDS_PROP_BLOCK                  11220
-#define IDS_PROP_COMMENT                11221
-#define IDS_PROP_NUM_SUBDIRS            11222
-#define IDS_PROP_NUM_SUBFILES           11223
-#define IDS_PROP_UNPACK_VER             11224
-#define IDS_PROP_VOLUME                 11225
-#define IDS_PROP_IS_VOLUME              11226
-#define IDS_PROP_NUM_BLOCKS             11227
-#define IDS_PROP_NUM_VOLUMES            11228
-#define IDS_PROP_PHY_SIZE               11229
-#define IDS_PROP_HEADERS_SIZE           11230
-#define IDS_PROP_CHECKSUM               11231
-#define IDS_PROP_CHARACTS               11232
-#define IDS_PROP_CREATOR_APP            11233
-#define IDS_PROP_TOTAL_SIZE             11234
-#define IDS_PROP_FREE_SPACE             11235
-#define IDS_PROP_CLUSTER_SIZE           11236
-#define IDS_PROP_VOLUME_NAME            11237
-#define IDS_PROP_LOCAL_NAME             11238
-#define IDS_PROP_PROVIDER               11239
-#define IDS_PROP_ERROR_TYPE             11240
-#define IDS_PROP_NUM_ERRORS             11241
-#define IDS_PROP_ERROR_FLAGS            11242
-#define IDS_PROP_WARNING_FLAGS          11243
-#define IDS_PROP_WARNING                11244
-#define IDS_PROP_NUM_STREAMS            11245
-#define IDS_PROP_CODE_PAGE              11246
-#define IDS_PROP_EMBEDDED_STUB_SIZE     11247
-
 // --- FormatSize / Misc ---
 #define IDS_FMT_SIZE_GB                 11250
 #define IDS_FMT_SIZE_MB                 11251
 #define IDS_FMT_SIZE_KB                 11252
 #define IDS_FMT_SIZE_BYTES              11253
-#define IDS_HOST_OS_UNKNOWN             11254
-#define IDS_ABOUT_NO_VERSION            11255
 #define IDS_ABOUT_NOT_LOADED            11256
 
 // --- Advanced Dialog (Compression settings) ---

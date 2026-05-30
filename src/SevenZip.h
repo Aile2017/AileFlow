@@ -1,35 +1,14 @@
 #pragma once
 #include <windows.h>
 #include <vector>
-#include <map>
 #include <string>
 #include "ArchiveItem.h"
 #include "WorkerThread.h"
-#include "7zip/Archive/IArchive.h"
-
-typedef HRESULT (WINAPI *Func_GetNumberOfMethods)(UINT32* numMethods);
-typedef HRESULT (WINAPI *Func_GetMethodProperty)(UINT32 index, PROPID propID, PROPVARIANT* value);
-typedef HRESULT (WINAPI *Func_GetNumberOfFormats)(UINT32* numFormats);
-typedef HRESULT (WINAPI *Func_GetHandlerProperty2)(UINT32 index, PROPID propID, PROPVARIANT* value);
 
 // Format info for the compress dialog: writable formats
 struct WritableFormat {
     std::wstring label;  // Display name e.g. "7-Zip (.7z)"
     std::wstring ext;    // Extension e.g. "7z"
-};
-
-// Whole-archive properties (for the properties dialog).
-// Populated by SevenZip::GetArchiveProperties() via IInArchive::GetArchiveProperty.
-struct ArchiveProperties {
-    std::wstring formatName;   // kpidType value ("7z","Rar","Zip" etc.); empty if not available
-    UINT32       fileCount    = 0;     // aggregate: number of regular files
-    UINT32       folderCount  = 0;     // aggregate: number of folders
-    UINT64       totalSize    = 0;     // aggregate: total uncompressed size
-    UINT64       packedTotal  = 0;     // aggregate: total compressed size
-    bool         hasEncrypted = false; // aggregate: true if at least one encrypted entry exists
-    std::vector<std::wstring> methods; // aggregate: set of compression methods used (no duplicates, in order of appearance)
-    // Key=display-string pairs from IInArchive::GetArchivePropertyInfo / GetArchiveProperty.
-    std::vector<std::pair<std::wstring, std::wstring>> rawProps;
 };
 
 // Advanced compression options passed to SevenZip::Compress().
@@ -43,11 +22,6 @@ struct CompressAdvanced {
     // Split volume size. "" = single file; specify as "10m","100m","1g" etc.
     // Valid only for seekable output (7z/zip etc.); ignored for stream-wrapped gz/bz2/xz/tar.
     std::wstring volumeSize;
-    // Absolute path to the self-extraction (SFX) module. Empty = no SFX.
-    // When non-empty, valid only for format == "7z". The module file is prepended to
-    // the compressed .7z data to produce a .exe at outPath.
-    // When used with split volumes, the SFX module is prepended only to volume 1 (.001).
-    std::wstring sfxModulePath;
 };
 
 class SevenZip {
@@ -75,14 +49,6 @@ public:
                     const wchar_t* destDir,
                     const wchar_t* password,
                     IExtractProgressSink* sink);
-
-    // Retrieves whole-archive properties (for the properties dialog).
-    // Fills format-specific metadata from IInArchive::GetArchiveProperty / GetArchivePropertyInfo
-    // and aggregates from entry enumeration (file count, total size, etc.).
-    // Does not auto-unwrap split archives; opens path directly as a single file.
-    HRESULT GetArchiveProperties(const wchar_t* path,
-                                 const wchar_t* password,
-                                 ArchiveProperties& out);
 
     // Integrity verification for all entries (passes testMode=1 to IInArchive::Extract).
     // Returns E_FAIL if any entry fails verification.
@@ -143,47 +109,9 @@ public:
     const std::vector<WritableFormat>& GetWritableFormats() const { return m_writableFormats; }
 
 private:
-    HMODULE                      m_hDll               = nullptr;
-    std::wstring                 m_loadedName;
-    std::wstring                 m_loadedPath;        // Full path to loaded DLL (for caching codec enumeration)
-    Func_CreateObject            m_pfnCreateObject    = nullptr;
-    Func_GetNumberOfMethods      m_pfnGetNumMethods   = nullptr;
-    Func_GetMethodProperty       m_pfnGetMethodProp   = nullptr;
-    Func_GetNumberOfFormats      m_pfnGetNumFormats   = nullptr;
-    Func_GetHandlerProperty2     m_pfnGetHandlerProp2 = nullptr;
-    std::wstring                 m_listColumnLabel; // B2E: raw header from 7z.exe l; empty for dll
-    std::vector<std::wstring>    m_encoderNames;   // lowercased; populated by EnumerateCodecs()
-    std::map<std::wstring, GUID> m_extToClsid;     // extension (lowercase) → CLSID
-    std::vector<WritableFormat>  m_writableFormats; // writable formats (for UI)
-    // Cache: path → actual format CLSID after RAR5→RAR4 fallback detection
-    std::map<std::wstring, GUID> m_pathFormatCache;
-    // Cache: (path + password_hash + format_guid) → ArchiveItem vector
-    // Keyed as: std::wstring composed of path + "|" + password_hash + "|" + guid_hex
-    // Limit: 100 entries (oldest evicted)
-    struct CacheEntry {
-        std::vector<ArchiveItem> items;
-        int order;  // for LRU eviction
-    };
-    std::map<std::wstring, CacheEntry> m_itemsCache;
-    int m_cacheOrder = 0;
-    static constexpr int MAX_CACHE_ENTRIES = 100;
-    
-    // Build cache key from path, password, and format GUID
-    static std::wstring BuildCacheKey(const wchar_t* path, const wchar_t* password, const GUID& fmt);
-    
-    // Hash password to short string (for cache key)
-    static UINT32 HashPassword(const wchar_t* password);
-
-    void EnumerateCodecs();
-    void EnumerateFormats();
-
-    HRESULT CreateInArchive(const GUID& clsid, IInArchive** ppArc);
-    HRESULT CreateOutArchive(const GUID& clsid, IOutArchive** ppArc);
-    GUID FormatToInGuid(const wchar_t* path) const;
-    GUID FormatToOutGuid(const wchar_t* format) const;
-    // Open archive with RAR5→RAR4 fallback, caching result for future calls
-    HRESULT OpenArchiveWithFallback(const wchar_t* path, const GUID& primaryGuid,
-                                    IInStream* fileSpec, const UInt64& maxCheck,
-                                    IArchiveOpenCallback* openCb, IInArchive*& archive);
-    static std::wstring ExtOfPath(const wchar_t* path);
+    HMODULE                     m_hDll            = nullptr;
+    std::wstring                m_loadedName;
+    std::wstring                m_listColumnLabel;
+    std::vector<std::wstring>   m_encoderNames;
+    std::vector<WritableFormat> m_writableFormats;
 };

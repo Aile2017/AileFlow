@@ -16,9 +16,6 @@ public:
     Settings& GetSettings()       { return m_settings; }
     SevenZip& Get7z()             { return m_sevenZip; }
 
-    // Reload DLLs after settings change.
-    void ReloadDlls();
-
     // Called from WinMain after arg parsing.
     int RunBrowseMode(const std::vector<std::wstring>& archivePaths, int nCmdShow);
     int RunCompressMode(const std::vector<std::wstring>& filePaths, int nCmdShow,
